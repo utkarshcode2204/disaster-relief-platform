@@ -1,19 +1,21 @@
+import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import RequestForm from '../components/RequestForm/RequestForm';
+import RequestMap from '../components/Map/Map';
 
 function Dashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
-  const handleRequestCreated = (newRequest) => {
-    console.log('New request created:', newRequest);
-    // We'll use this to refresh the map/list once those are built
+  const handleRequestCreated = () => {
+    setRefreshTrigger((prev) => prev + 1);
   };
 
   return (
@@ -30,8 +32,9 @@ function Dashboard() {
         </button>
       </div>
 
-      <div className="flex justify-center">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <RequestForm onRequestCreated={handleRequestCreated} />
+        <RequestMap refreshTrigger={refreshTrigger} />
       </div>
     </div>
   );
