@@ -1,0 +1,68 @@
+const Request = require('../models/Request');
+
+// Create a new help request
+const createRequest = async (req, res) => {
+  try {
+    const { name, phone, category, description, longitude, latitude } = req.body;
+
+    const request = await Request.create({
+      requesterId: req.user ? req.user.id : null,
+      name,
+      phone,
+      category,
+      description,
+      location: {
+        type: 'Point',
+        coordinates: [longitude, latitude],
+      },
+    });
+
+    res.status(201).json(request);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// Get all requests, with optional geo/category/urgency filters
+const getRequests = async (req, res) => {
+  try {
+    const { lng, lat, radius, category } = req.query;
+    let query = {};
+
+    if (category) {
+      query.category = category;
+    }
+
+    if (lng && lat && radius) {
+      query.location = {
+        $near: {
+          $geometry: {
+            type: 'Point',
+            coordinates: [parseFloat(lng), parseFloat(lat)],
+          },
+          $maxDistance: parseFloat(radius) * 1000, // radius in km -> meters
+        },
+      };
+    }
+
+    const requests = await Request.find(query).sort({ createdAt: -1 });
+    res.status(200).json(requests);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// Get a single request by ID
+const getRequestById = async (req, res) => {
+  try {
+    const request = await Request.findById(req.params.id);
+    if (!request) {
+      return res.status(404).json({ message: 'Request not found' });
+    }
+    res.status(200).json(request);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+module.exports = { createRequest, getRequests, getRequestById };

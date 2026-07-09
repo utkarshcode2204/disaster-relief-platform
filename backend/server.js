@@ -6,6 +6,7 @@ const { Server } = require('socket.io');
 const connectDB = require('./config/db');
 
 const authRoutes = require('./routes/authRoutes');
+const requestRoutes = require('./routes/requestRoutes');
 
 dotenv.config();
 connectDB();
@@ -18,6 +19,7 @@ app.get('/', (req, res) => {
   res.send('Disaster Relief API is running');
 });
 app.use('/api/auth', authRoutes);
+app.use('/api/requests', requestRoutes);
 
 const server = http.createServer(app);
 const io = new Server(server, {
