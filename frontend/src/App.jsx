@@ -1,10 +1,22 @@
+import { Routes, Route, Navigate } from 'react-router-dom';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Dashboard from './pages/Dashboard';
+import { useAuth } from './context/AuthContext';
+
 function App() {
+  const { user } = useAuth();
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <h1 className="text-3xl font-bold text-blue-600">
-        Disaster Relief Platform
-      </h1>
-    </div>
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route
+        path="/dashboard"
+        element={user ? <Dashboard /> : <Navigate to="/login" />}
+      />
+      <Route path="/" element={<Navigate to={user ? '/dashboard' : '/login'} />} />
+    </Routes>
   );
 }
 
