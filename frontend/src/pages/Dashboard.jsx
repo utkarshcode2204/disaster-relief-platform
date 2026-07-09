@@ -1,5 +1,6 @@
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import RequestForm from '../components/RequestForm/RequestForm';
 
 function Dashboard() {
   const { user, logout } = useAuth();
@@ -8,6 +9,11 @@ function Dashboard() {
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const handleRequestCreated = (newRequest) => {
+    console.log('New request created:', newRequest);
+    // We'll use this to refresh the map/list once those are built
   };
 
   return (
@@ -24,9 +30,9 @@ function Dashboard() {
         </button>
       </div>
 
-      <p className="text-gray-600">
-        Dashboard content (map, requests) will go here.
-      </p>
+      <div className="flex justify-center">
+        <RequestForm onRequestCreated={handleRequestCreated} />
+      </div>
     </div>
   );
 }
