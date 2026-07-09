@@ -65,4 +65,43 @@ const getRequestById = async (req, res) => {
   }
 };
 
-module.exports = { createRequest, getRequests, getRequestById };
+// Claim a request
+const claimRequest = async (req, res) => {
+  try {
+    const request = await Request.findById(req.params.id);
+    if (!request) {
+      return res.status(404).json({ message: 'Request not found' });
+    }
+
+    if (request.status !== 'pending') {
+      return res.status(400).json({ message: 'Request is already claimed or resolved' });
+    }
+
+    request.status = 'claimed';
+    request.claimedBy = req.user.id;
+    await request.save();
+
+    res.status(200).json(request);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// Resolve a request
+const resolveRequest = async (req, res) => {
+  try {
+    const request = await Request.findById(req.params.id);
+    if (!request) {
+      return res.status(404).json({ message: 'Request not found' });
+    }
+
+    request.status = 'resolved';
+    await request.save();
+
+    res.status(200).json(request);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+module.exports = { createRequest, getRequests, getRequestById, claimRequest, resolveRequest };
