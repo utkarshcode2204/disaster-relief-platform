@@ -1,19 +1,27 @@
 const Request = require('../models/Request');
+const classifyRequest = require('../utils/aiClassifier');
 
 // Create a new help request
 const createRequest = async (req, res) => {
   try {
-    const { name, phone, category, description, longitude, latitude } = req.body;
+    const { name, phone, description, longitude, latitude } = req.body;
+
+    const aiResult = await classifyRequest(description);
 
     const request = await Request.create({
       requesterId: req.user ? req.user.id : null,
       name,
       phone,
-      category,
+      category: aiResult.category,
       description,
       location: {
         type: 'Point',
         coordinates: [longitude, latitude],
+      },
+      aiExtracted: {
+        urgencyScore: aiResult.urgencyScore,
+        peopleAffected: aiResult.peopleAffected,
+        tags: aiResult.tags,
       },
     });
 

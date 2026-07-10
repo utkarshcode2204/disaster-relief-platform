@@ -5,7 +5,6 @@ function RequestForm({ onRequestCreated }) {
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
-    category: 'medical',
     description: '',
   });
   const [location, setLocation] = useState(null);
@@ -54,7 +53,7 @@ function RequestForm({ onRequestCreated }) {
         latitude: location.latitude,
       });
       setSuccess('Request submitted successfully!');
-      setFormData({ name: '', phone: '', category: 'medical', description: '' });
+      setFormData({ name: '', phone: '', description: '' });
       setLocation(null);
       if (onRequestCreated) onRequestCreated(res.data);
     } catch (err) {
@@ -91,18 +90,6 @@ function RequestForm({ onRequestCreated }) {
         onChange={handleChange}
         className="w-full border rounded px-3 py-2 mb-3"
       />
-
-      <select
-        name="category"
-        value={formData.category}
-        onChange={handleChange}
-        className="w-full border rounded px-3 py-2 mb-3"
-      >
-        <option value="medical">Medical</option>
-        <option value="food">Food</option>
-        <option value="shelter">Shelter</option>
-        <option value="rescue">Rescue</option>
-      </select>
 
       <textarea
         name="description"
