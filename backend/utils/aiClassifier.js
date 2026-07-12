@@ -1,12 +1,15 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const axios = require('axios');
 
 const classifyRequest = async (description) => {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
-
-    const prompt = `You are helping triage disaster relief requests. Given the description below, respond ONLY with a valid JSON object (no markdown, no explanation, no code fences) in this exact format:
+    const response = await axios.post(
+      'https://api.groq.com/openai/v1/chat/completions',
+      {
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          {
+            role: 'user',
+            content: `You are helping triage disaster relief requests. Given the description below, respond ONLY with a valid JSON object (no markdown, no explanation, no code fences) in this exact format:
 {
   "category": "medical" | "food" | "shelter" | "rescue",
   "urgencyScore": <number 1-5, 5 being most urgent>,
@@ -14,12 +17,19 @@ const classifyRequest = async (description) => {
   "tags": [<short keyword strings describing the situation>]
 }
 
-Description: "${description}"`;
+Description: "${description}"`,
+          },
+        ],
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
 
-    const result = await model.generateContent(prompt);
-    let responseText = result.response.text().trim();
-
-    // Gemini sometimes wraps JSON in markdown code fences - strip them if present
+    let responseText = response.data.choices[0].message.content.trim();
     responseText = responseText.replace(/```json|```/g, '').trim();
 
     const parsed = JSON.parse(responseText);
