@@ -25,6 +25,9 @@ const createRequest = async (req, res) => {
       },
     });
 
+    const io = req.app.get('io');
+    io.emit('new_request', request);
+
     res.status(201).json(request);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
@@ -89,6 +92,9 @@ const claimRequest = async (req, res) => {
     request.claimedBy = req.user.id;
     await request.save();
 
+    const io = req.app.get('io');
+    io.emit('request_updated', request);
+
     res.status(200).json(request);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
@@ -105,6 +111,9 @@ const resolveRequest = async (req, res) => {
 
     request.status = 'resolved';
     await request.save();
+
+    const io = req.app.get('io');
+    io.emit('request_updated', request);
 
     res.status(200).json(request);
   } catch (err) {

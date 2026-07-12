@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import RequestForm from '../components/RequestForm/RequestForm';
@@ -7,15 +6,10 @@ import RequestMap from '../components/Map/Map';
 function Dashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
-  };
-
-  const handleRequestCreated = () => {
-    setRefreshTrigger((prev) => prev + 1);
   };
 
   return (
@@ -33,8 +27,8 @@ function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <RequestForm onRequestCreated={handleRequestCreated} />
-        <RequestMap refreshTrigger={refreshTrigger} />
+        <RequestForm />
+        <RequestMap />
       </div>
     </div>
   );

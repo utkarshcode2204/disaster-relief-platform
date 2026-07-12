@@ -32,6 +32,7 @@ io.on('connection', (socket) => {
     console.log('Client disconnected:', socket.id);
   });
 });
+app.set('io', io);
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {

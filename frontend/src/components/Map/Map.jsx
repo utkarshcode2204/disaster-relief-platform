@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import api from '../../services/api';
+import socket from '../../services/socket';
 
 // Fix Leaflet's default marker icons (they break with Vite's bundling)
 delete L.Icon.Default.prototype._getIconUrl;
@@ -11,14 +12,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
-const categoryColors = {
-  medical: 'red',
-  food: 'green',
-  shelter: 'blue',
-  rescue: 'orange',
-};
-
-function RequestMap({ refreshTrigger }) {
+function RequestMap() {
   const [requests, setRequests] = useState([]);
   const defaultCenter = [23.2599, 77.4126]; // Bhopal, as a fallback center
 
@@ -32,7 +26,25 @@ function RequestMap({ refreshTrigger }) {
       }
     };
     fetchRequests();
-  }, [refreshTrigger]);
+
+    // Listen for new requests
+    socket.on('new_request', (newRequest) => {
+      setRequests((prev) => [newRequest, ...prev]);
+    });
+
+    // Listen for status updates (claim/resolve)
+    socket.on('request_updated', (updatedRequest) => {
+      setRequests((prev) =>
+        prev.map((req) => (req._id === updatedRequest._id ? updatedRequest : req))
+      );
+    });
+
+    // Cleanup listeners when component unmounts
+    return () => {
+      socket.off('new_request');
+      socket.off('request_updated');
+    };
+  }, []);
 
   return (
     <div className="w-full h-96 rounded-lg overflow-hidden shadow-md">
