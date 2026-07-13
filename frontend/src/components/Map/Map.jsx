@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import api from '../../services/api';
 import socket from '../../services/socket';
+import { useAuth } from '../../context/AuthContext';
 
 // Fix Leaflet's default marker icons (they break with Vite's bundling)
 delete L.Icon.Default.prototype._getIconUrl;
@@ -14,6 +15,7 @@ L.Icon.Default.mergeOptions({
 
 function RequestMap() {
   const [requests, setRequests] = useState([]);
+  const { user } = useAuth();
   const defaultCenter = [23.2599, 77.4126]; // Bhopal, as a fallback center
 
   useEffect(() => {
@@ -27,24 +29,37 @@ function RequestMap() {
     };
     fetchRequests();
 
-    // Listen for new requests
     socket.on('new_request', (newRequest) => {
       setRequests((prev) => [newRequest, ...prev]);
     });
 
-    // Listen for status updates (claim/resolve)
     socket.on('request_updated', (updatedRequest) => {
       setRequests((prev) =>
         prev.map((req) => (req._id === updatedRequest._id ? updatedRequest : req))
       );
     });
 
-    // Cleanup listeners when component unmounts
     return () => {
       socket.off('new_request');
       socket.off('request_updated');
     };
   }, []);
+
+  const handleClaim = async (id) => {
+    try {
+      await api.patch(`/requests/${id}/claim`);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to claim request');
+    }
+  };
+
+  const handleResolve = async (id) => {
+    try {
+      await api.patch(`/requests/${id}/resolve`);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to resolve request');
+    }
+  };
 
   return (
     <div className="w-full h-96 rounded-lg overflow-hidden shadow-md">
@@ -65,7 +80,29 @@ function RequestMap() {
             <Popup>
               <strong>{req.category.toUpperCase()}</strong>
               <p>{req.description}</p>
-              <p className="text-xs text-gray-500">Status: {req.status}</p>
+              <p className="text-xs text-gray-500 mb-2">Status: {req.status}</p>
+
+              {user && req.status === 'pending' && (
+                <button
+                  onClick={() => handleClaim(req._id)}
+                  className="bg-blue-600 text-white text-xs px-3 py-1 rounded hover:bg-blue-700 mr-2"
+                >
+                  Claim
+                </button>
+              )}
+
+              {user && req.status === 'claimed' && (
+                <button
+                  onClick={() => handleResolve(req._id)}
+                  className="bg-green-600 text-white text-xs px-3 py-1 rounded hover:bg-green-700"
+                >
+                  Mark Resolved
+                </button>
+              )}
+
+              {!user && req.status === 'pending' && (
+                <p className="text-xs text-gray-400 italic">Log in to claim this request</p>
+              )}
             </Popup>
           </Marker>
         ))}
