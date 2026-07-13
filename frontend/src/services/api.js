@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: 'https://disaster-relief-backend-oale.onrender.com/api',
 });
 
 // Attach JWT token automatically if it exists
