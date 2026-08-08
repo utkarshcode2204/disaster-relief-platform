@@ -35,6 +35,19 @@ const userSchema = new mongoose.Schema({
       relation: String,
     },
   ],
+resources: [
+    {
+      type: {
+        type: String,
+        enum: ['boat', 'vehicle', 'medical_kit', 'food_supplies', 'shelter_space', 'other'],
+      },
+      quantity: {
+        type: Number,
+        default: 1,
+      },
+      notes: String,
+    },
+  ],
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);

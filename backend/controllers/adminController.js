@@ -1,5 +1,6 @@
 const Request = require('../models/Request');
 const User = require('../models/User');
+const Incident = require('../models/Incident');
 
 // Dashboard summary stats
 const getDashboardStats = async (req, res) => {
@@ -77,10 +78,22 @@ const updateVerificationStatus = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
+// Get all active incidents sorted by severity
+const getIncidents = async (req, res) => {
+  try {
+    const incidents = await Incident.find({ status: 'active' })
+      .populate('requestIds')
+      .sort({ maxUrgencyScore: -1, totalPeopleAffected: -1 });
+    res.status(200).json(incidents);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
 
 module.exports = {
   getDashboardStats,
   getPriorityQueue,
   getAllUsers,
   updateVerificationStatus,
+  getIncidents,
 };

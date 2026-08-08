@@ -5,6 +5,7 @@ const {
   getPriorityQueue,
   getAllUsers,
   updateVerificationStatus,
+  getIncidents,
 } = require('../controllers/adminController');
 const protect = require('../middleware/authMiddleware');
 const authorize = require('../middleware/roleMiddleware');
@@ -16,5 +17,6 @@ router.get('/stats', getDashboardStats);
 router.get('/priority-queue', getPriorityQueue);
 router.get('/users', getAllUsers);
 router.patch('/users/:id/verification', updateVerificationStatus);
+router.get('/incidents', getIncidents);
 
 module.exports = router;

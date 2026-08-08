@@ -10,20 +10,25 @@ function AdminDashboard() {
   const [stats, setStats] = useState(null);
   const [priorityQueue, setPriorityQueue] = useState([]);
   const [users, setUsers] = useState([]);
+  const [incidents, setIncidents] = useState([]);
+  const [matches, setMatches] = useState({});
+  const [matchLoading, setMatchLoading] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [statsRes, queueRes, usersRes] = await Promise.all([
+        const [statsRes, queueRes, usersRes, incidentsRes] = await Promise.all([
           api.get('/admin/stats'),
           api.get('/admin/priority-queue'),
           api.get('/admin/users'),
+          api.get('/admin/incidents'),
         ]);
         setStats(statsRes.data);
         setPriorityQueue(queueRes.data);
         setUsers(usersRes.data);
+        setIncidents(incidentsRes.data);
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to load admin data');
       } finally {
@@ -41,6 +46,18 @@ function AdminDashboard() {
       );
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to update verification');
+    }
+  };
+
+  const handleFindMatches = async (incidentId) => {
+    setMatchLoading(incidentId);
+    try {
+      const res = await api.get(`/resources/match/${incidentId}`);
+      setMatches((prev) => ({ ...prev, [incidentId]: res.data }));
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to find matching volunteers');
+    } finally {
+      setMatchLoading(null);
     }
   };
 
@@ -74,7 +91,6 @@ function AdminDashboard() {
         </div>
       </div>
 
-      {/* Stats cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <div className="bg-white p-4 rounded shadow">
           <p className="text-sm text-gray-500">Total Requests</p>
@@ -94,8 +110,56 @@ function AdminDashboard() {
         </div>
       </div>
 
+      <div className="bg-white rounded shadow p-4 mb-6">
+        <h2 className="text-lg font-semibold mb-3">Active Incidents (Clustered)</h2>
+        <div className="space-y-3">
+          {incidents.length === 0 && (
+            <p className="text-gray-500 text-sm">No active incidents.</p>
+          )}
+          {incidents.map((incident) => (
+            <div key={incident._id} className="border rounded p-3">
+              <div className="flex justify-between items-start">
+                <div>
+                  <span className="font-medium capitalize">{incident.category}</span>
+                  <span className="text-xs text-gray-500 ml-2">
+                    {incident.requestIds.length} request{incident.requestIds.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
+                <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">
+                  Max Urgency: {incident.maxUrgencyScore}
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                People affected (total): {incident.totalPeopleAffected}
+              </p>
+              <button
+                onClick={() => handleFindMatches(incident._id)}
+                disabled={matchLoading === incident._id}
+                className="mt-2 text-xs bg-purple-500 text-white px-3 py-1 rounded hover:bg-purple-600 disabled:opacity-50"
+              >
+                {matchLoading === incident._id ? 'Searching...' : 'Find Matching Volunteers'}
+              </button>
+
+              {matches[incident._id] && (
+                <div className="mt-2 border-t pt-2">
+                  {matches[incident._id].length === 0 ? (
+                    <p className="text-xs text-gray-500">No matching volunteers found.</p>
+                  ) : (
+                    matches[incident._id].map((v) => (
+                      <div key={v._id} className="text-xs text-gray-700 mt-1">
+                        <span className="font-medium">{v.name}</span>{' '}
+                        ({v.resources.map((r) => `${r.type} x${r.quantity}`).join(', ')})
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Priority queue */}
         <div className="bg-white rounded shadow p-4">
           <h2 className="text-lg font-semibold mb-3">Priority Queue</h2>
           <div className="space-y-2 max-h-96 overflow-y-auto">
@@ -121,7 +185,6 @@ function AdminDashboard() {
           </div>
         </div>
 
-        {/* Users / verification */}
         <div className="bg-white rounded shadow p-4">
           <h2 className="text-lg font-semibold mb-3">Users</h2>
           <div className="space-y-2 max-h-96 overflow-y-auto">

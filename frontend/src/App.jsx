@@ -3,6 +3,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import MyResources from './pages/MyResources';
 import { useAuth } from './context/AuthContext';
 
 function App() {
@@ -20,6 +21,10 @@ function App() {
         element={
           user && user.role === 'admin' ? <AdminDashboard /> : <Navigate to="/dashboard" />
         }
+      />
+      <Route
+        path="/my-resources"
+        element={user ? <MyResources /> : <Navigate to="/login" />}
       />
       <Route path="/" element={<Navigate to={user ? '/dashboard' : '/login'} />} />
     </Routes>

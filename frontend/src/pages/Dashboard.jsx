@@ -18,7 +18,15 @@ function Dashboard() {
         <h1 className="text-2xl font-bold text-blue-600">
           Welcome, {user?.name}
         </h1>
-        <div className="flex gap-3">
+       <div className="flex gap-3">
+          {user?.role === 'volunteer' && (
+            <button
+              onClick={() => navigate('/my-resources')}
+              className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+            >
+              My Resources
+            </button>
+          )}
           {user?.role === 'admin' && (
             <button
               onClick={() => navigate('/admin')}
