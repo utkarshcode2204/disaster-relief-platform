@@ -1,4 +1,5 @@
-import { createContext, useState, useContext } from 'react';
+import { createContext, useState, useContext, useEffect } from 'react';
+import { registerUserRoom } from '../services/socket';
 
 const AuthContext = createContext();
 
@@ -8,11 +9,18 @@ export function AuthProvider({ children }) {
     return stored ? JSON.parse(stored) : null;
   });
 
-  const login = (userData, token) => {
+ const login = (userData, token) => {
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
+    registerUserRoom(userData.id);
   };
+
+  useEffect(() => {
+    if (user) {
+      registerUserRoom(user.id);
+    }
+  }, [user]);
 
   const logout = () => {
     localStorage.removeItem('token');

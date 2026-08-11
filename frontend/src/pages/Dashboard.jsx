@@ -2,6 +2,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import RequestForm from '../components/RequestForm/RequestForm';
 import RequestMap from '../components/Map/Map';
+import NotificationBell from '../components/NotificationBell';
 
 function Dashboard() {
   const { user, logout } = useAuth();
@@ -18,7 +19,8 @@ function Dashboard() {
         <h1 className="text-2xl font-bold text-blue-600">
           Welcome, {user?.name}
         </h1>
-       <div className="flex gap-3">
+        <div className="flex gap-3 items-center">
+          {user && <NotificationBell />}
           {user?.role === 'volunteer' && (
             <button
               onClick={() => navigate('/my-resources')}

@@ -4,6 +4,9 @@ import L from 'leaflet';
 import api from '../../services/api';
 import socket from '../../services/socket';
 import { useAuth } from '../../context/AuthContext';
+import Chat from '../Chat/Chat';
+import LocationShare from '../Chat/LocationShare';
+import ResponderLocation from '../Chat/ResponderLocation';
 
 // Fix Leaflet's default marker icons (they break with Vite's bundling)
 delete L.Icon.Default.prototype._getIconUrl;
@@ -72,40 +75,55 @@ function RequestMap() {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; OpenStreetMap contributors'
         />
-        {requests.map((req) => (
-          <Marker
-            key={req._id}
-            position={[req.location.coordinates[1], req.location.coordinates[0]]}
-          >
-            <Popup>
-              <strong>{req.category.toUpperCase()}</strong>
-              <p>{req.description}</p>
-              <p className="text-xs text-gray-500 mb-2">Status: {req.status}</p>
+        {requests.map((req) => {
+          const isResponder =
+            user && req.claimedBy && req.claimedBy === user.id;
 
-              {user && req.status === 'pending' && (
-                <button
-                  onClick={() => handleClaim(req._id)}
-                  className="bg-blue-600 text-white text-xs px-3 py-1 rounded hover:bg-blue-700 mr-2"
-                >
-                  Claim
-                </button>
-              )}
+          return (
+            <Marker
+              key={req._id}
+              position={[req.location.coordinates[1], req.location.coordinates[0]]}
+            >
+              <Popup minWidth={220}>
+                <strong>{req.category.toUpperCase()}</strong>
+                <p>{req.description}</p>
+                <p className="text-xs text-gray-500 mb-2">Status: {req.status}</p>
 
-              {user && req.status === 'claimed' && (
-                <button
-                  onClick={() => handleResolve(req._id)}
-                  className="bg-green-600 text-white text-xs px-3 py-1 rounded hover:bg-green-700"
-                >
-                  Mark Resolved
-                </button>
-              )}
+                {user && req.status === 'pending' && (
+                  <button
+                    onClick={() => handleClaim(req._id)}
+                    className="bg-blue-600 text-white text-xs px-3 py-1 rounded hover:bg-blue-700 mr-2"
+                  >
+                    Claim
+                  </button>
+                )}
 
-              {!user && req.status === 'pending' && (
-                <p className="text-xs text-gray-400 italic">Log in to claim this request</p>
-              )}
-            </Popup>
-          </Marker>
-        ))}
+                {user && req.status === 'claimed' && (
+                  <button
+                    onClick={() => handleResolve(req._id)}
+                    className="bg-green-600 text-white text-xs px-3 py-1 rounded hover:bg-green-700"
+                  >
+                    Mark Resolved
+                  </button>
+                )}
+
+                {!user && req.status === 'pending' && (
+                  <p className="text-xs text-gray-400 italic">Log in to claim this request</p>
+                )}
+
+                {user && req.status === 'claimed' && <Chat requestId={req._id} />}
+
+                {user && req.status === 'claimed' && isResponder && (
+                  <LocationShare requestId={req._id} />
+                )}
+
+                {user && req.status === 'claimed' && !isResponder && (
+                  <ResponderLocation requestId={req._id} />
+                )}
+              </Popup>
+            </Marker>
+          );
+        })}
       </MapContainer>
     </div>
   );

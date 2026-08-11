@@ -1,4 +1,33 @@
 const Incident = require('../models/Incident');
+const User = require('../models/User');
+
+const CATEGORY_TO_RESOURCE = {
+  rescue: ['boat', 'vehicle'],
+  medical: ['medical_kit', 'vehicle'],
+  food: ['food_supplies', 'vehicle'],
+  shelter: ['shelter_space', 'vehicle'],
+};
+
+const notifyMatchingVolunteers = async (io, incident) => {
+  if (incident.maxUrgencyScore < 4) return; // only notify for high-urgency incidents
+
+  const relevantTypes = CATEGORY_TO_RESOURCE[incident.category] || [];
+  const volunteers = await User.find({
+    role: 'volunteer',
+    'resources.type': { $in: relevantTypes },
+  }).select('_id');
+
+  volunteers.forEach((v) => {
+    io.to(`user_${v._id}`).emit('notification', {
+      type: 'high_urgency_incident',
+      incidentId: incident._id,
+      category: incident.category,
+      urgencyScore: incident.maxUrgencyScore,
+      message: `High-urgency ${incident.category} incident nearby needs your help`,
+      createdAt: new Date(),
+    });
+  });
+};
 
 const CLUSTER_RADIUS_METERS = 2000; // 2km
 
@@ -36,7 +65,7 @@ const assignToIncident = async (request) => {
     await incident.save();
   }
 
-  return incident;
+return incident;
 };
 
-module.exports = { assignToIncident };
+module.exports = { assignToIncident, notifyMatchingVolunteers };

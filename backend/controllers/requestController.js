@@ -1,7 +1,6 @@
 const Request = require('../models/Request');
 const classifyRequest = require('../utils/aiClassifier');
-const { assignToIncident } = require('../utils/incidentClustering');
-
+const { assignToIncident, notifyMatchingVolunteers } = require('../utils/incidentClustering');
 // Create a new help request
 const createRequest = async (req, res) => {
   try {
@@ -25,12 +24,12 @@ const createRequest = async (req, res) => {
         tags: aiResult.tags,
       },
     });
-
-   const incident = await assignToIncident(request);
+const incident = await assignToIncident(request);
 
     const io = req.app.get('io');
     io.emit('new_request', request);
     io.emit('incident_updated', incident);
+    await notifyMatchingVolunteers(io, incident);
     res.status(201).json({ request, incident });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
