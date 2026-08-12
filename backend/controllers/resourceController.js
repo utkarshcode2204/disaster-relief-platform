@@ -56,4 +56,60 @@ const findMatchingVolunteers = async (req, res) => {
   }
 };
 
-module.exports = { updateMyResources, getMyResources, findMatchingVolunteers };
+// Submit ID verification details (text-based, no file upload)
+const submitIdVerification = async (req, res) => {
+  try {
+    const { idType, idNumber } = req.body;
+    if (!idType || !idNumber) {
+      return res.status(400).json({ message: 'idType and idNumber are required' });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    user.idVerification = { idType, idNumber, submittedAt: new Date() };
+    user.verificationStatus = 'pending';
+    await user.save();
+
+    res.status(200).json({ idVerification: user.idVerification, verificationStatus: user.verificationStatus });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// Update emergency contacts
+const updateEmergencyContacts = async (req, res) => {
+  try {
+    const { emergencyContacts } = req.body; // array of { name, phone, relation }
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    user.emergencyContacts = emergencyContacts;
+    await user.save();
+    res.status(200).json({ emergencyContacts: user.emergencyContacts });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// Get logged-in user's own profile (resources, verification, emergency contacts)
+const getMyProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+    res.status(200).json(user);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+module.exports = {
+  updateMyResources,
+  getMyResources,
+  findMatchingVolunteers,
+  submitIdVerification,
+  updateEmergencyContacts,
+  getMyProfile,
+};

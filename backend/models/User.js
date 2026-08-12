@@ -48,6 +48,14 @@ resources: [
       notes: String,
     },
   ],
+idVerification: {
+    idType: {
+      type: String,
+      enum: ['aadhaar', 'passport', 'driving_license', 'voter_id', 'other'],
+    },
+    idNumber: String,
+    submittedAt: Date,
+  },
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);

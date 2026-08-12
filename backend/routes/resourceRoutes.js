@@ -4,8 +4,10 @@ const {
   updateMyResources,
   getMyResources,
   findMatchingVolunteers,
-} = require('../controllers/resourceController');
-const protect = require('../middleware/authMiddleware');
+  submitIdVerification,
+  updateEmergencyContacts,
+  getMyProfile,
+} = require('../controllers/resourceController');const protect = require('../middleware/authMiddleware');
 const authorize = require('../middleware/roleMiddleware');
 
 // Volunteer manages their own resources
@@ -19,5 +21,7 @@ router.get(
   authorize('admin'),
   findMatchingVolunteers
 );
-
+router.get('/profile', protect, getMyProfile);
+router.put('/id-verification', protect, submitIdVerification);
+router.put('/emergency-contacts', protect, updateEmergencyContacts);
 module.exports = router;
