@@ -1,5 +1,21 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+// Custom lightweight sanitizer (express-mongo-sanitize is incompatible with
+// newer Express versions where req.query is read-only)
+const sanitizeObject = (obj) => {
+  if (obj && typeof obj === 'object') {
+    for (const key of Object.keys(obj)) {
+      if (key.startsWith('$') || key.includes('.')) {
+        delete obj[key];
+      } else if (typeof obj[key] === 'object') {
+        sanitizeObject(obj[key]);
+      }
+    }
+  }
+  return obj;
+};
 const dotenv = require('dotenv');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -15,9 +31,23 @@ dotenv.config();
 connectDB();
 
 const app = express();
+app.use(helmet());
 app.use(cors());
 app.use(express.json());
+app.use((req, res, next) => {
+  if (req.body) sanitizeObject(req.body);
+  next();
+});
 
+// Rate limiter for auth routes — prevents brute-force login/register attempts
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // limit each IP to 20 requests per window
+  message: { message: 'Too many attempts, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api/auth', authLimiter);
 app.get('/', (req, res) => {
   res.send('Disaster Relief API is running');
 });
