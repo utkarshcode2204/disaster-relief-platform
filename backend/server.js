@@ -78,6 +78,28 @@ socket.on('register_user', (userId) => {
     socket.join(`user_${userId}`);
   });
 
+  // ---- WebRTC call signaling ----
+  // These events just relay messages between the two users already sharing
+  // a request room (joined via join_request). No audio ever passes through
+  // this server — only the connection setup handshake (SDP offer/answer +
+  // ICE candidates) is relayed here; the actual audio is peer-to-peer.
+
+  socket.on('call_offer', ({ requestId, offer, callerName }) => {
+    socket.to(`request_${requestId}`).emit('call_offer', { offer, callerName, from: socket.id });
+  });
+
+  socket.on('call_answer', ({ requestId, answer }) => {
+    socket.to(`request_${requestId}`).emit('call_answer', { answer, from: socket.id });
+  });
+
+  socket.on('ice_candidate', ({ requestId, candidate }) => {
+    socket.to(`request_${requestId}`).emit('ice_candidate', { candidate, from: socket.id });
+  });
+
+  socket.on('call_end', ({ requestId }) => {
+    socket.to(`request_${requestId}`).emit('call_end', { from: socket.id });
+  });
+
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
   });

@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import api from '../../services/api';
 import socket from '../../services/socket';
 import { useAuth } from '../../context/AuthContext';
+import useWebRTCCall from '../../hooks/useWebRTCCall';
 
 function Chat({ requestId }) {
   const { user } = useAuth();
@@ -9,6 +10,18 @@ function Chat({ requestId }) {
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(true);
   const bottomRef = useRef(null);
+
+  const {
+    callStatus,
+    incomingCallerName,
+    isMuted,
+    remoteAudioRef,
+    startCall,
+    answerCall,
+    declineCall,
+    endCall,
+    toggleMute,
+  } = useWebRTCCall(requestId, user?.name);
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -57,6 +70,69 @@ function Chat({ requestId }) {
 
   return (
     <div className="mt-2 border-t pt-2">
+      {/* Hidden audio element that plays the other person's voice */}
+      <audio ref={remoteAudioRef} autoPlay />
+
+      {/* Call controls */}
+      <div className="mb-2">
+        {callStatus === 'idle' && (
+          <button
+            onClick={startCall}
+            className="flex items-center gap-1 bg-green-500 text-white text-xs px-2 py-1 rounded hover:bg-green-600"
+          >
+            📞 Call
+          </button>
+        )}
+
+        {callStatus === 'calling' && (
+          <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded px-2 py-1">
+            <span className="text-xs text-yellow-700">Calling...</span>
+            <button
+              onClick={endCall}
+              className="bg-red-500 text-white text-xs px-2 py-0.5 rounded hover:bg-red-600"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+
+        {callStatus === 'incoming' && (
+          <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded px-2 py-1">
+            <span className="text-xs text-blue-700">{incomingCallerName} is calling...</span>
+            <button
+              onClick={answerCall}
+              className="bg-green-500 text-white text-xs px-2 py-0.5 rounded hover:bg-green-600"
+            >
+              Answer
+            </button>
+            <button
+              onClick={declineCall}
+              className="bg-red-500 text-white text-xs px-2 py-0.5 rounded hover:bg-red-600"
+            >
+              Decline
+            </button>
+          </div>
+        )}
+
+        {callStatus === 'in-call' && (
+          <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded px-2 py-1">
+            <span className="text-xs text-green-700">On call</span>
+            <button
+              onClick={toggleMute}
+              className="bg-gray-500 text-white text-xs px-2 py-0.5 rounded hover:bg-gray-600"
+            >
+              {isMuted ? 'Unmute' : 'Mute'}
+            </button>
+            <button
+              onClick={endCall}
+              className="bg-red-500 text-white text-xs px-2 py-0.5 rounded hover:bg-red-600"
+            >
+              Hang up
+            </button>
+          </div>
+        )}
+      </div>
+
       <div className="max-h-40 overflow-y-auto space-y-1 mb-2">
         {messages.length === 0 && (
           <p className="text-xs text-gray-400">No messages yet.</p>
