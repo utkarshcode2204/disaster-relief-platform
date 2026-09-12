@@ -47,6 +47,17 @@ const requestSchema = new mongoose.Schema({
     ref: 'User',
     default: null,
   },
+  // Escalation to government authorities - only settable by the claiming
+  // volunteer, and only meaningful for disaster-level requests (gated on
+  // aiExtracted.urgencyScore on the frontend/backend).
+  escalated: {
+    type: Boolean,
+    default: false,
+  },
+  escalatedAt: {
+    type: Date,
+    default: null,
+  },
 }, { timestamps: true });
 
 requestSchema.index({ location: '2dsphere' });

@@ -1,6 +1,13 @@
 const Request = require('../models/Request');
+const User = require('../models/User');
 const classifyRequest = require('../utils/aiClassifier');
 const { assignToIncident, notifyMatchingVolunteers } = require('../utils/incidentClustering');
+const { sendEscalationEmail } = require('../utils/emailSender');
+
+// Minimum urgency score (on the AI-generated 0-10 scale) for a request to
+// count as "disaster-level" and be eligible for escalation to authorities.
+const ESCALATION_URGENCY_THRESHOLD = 5; 
+
 // Create a new help request
 const createRequest = async (req, res) => {
   try {
@@ -123,4 +130,42 @@ const resolveRequest = async (req, res) => {
   }
 };
 
-module.exports = { createRequest, getRequests, getRequestById, claimRequest, resolveRequest };
+// Escalate a request to government authorities - only the volunteer who
+// claimed it can do this, and only for disaster-level (high urgency) requests.
+const escalateRequest = async (req, res) => {
+  try {
+    const request = await Request.findById(req.params.id);
+    if (!request) {
+      return res.status(404).json({ message: 'Request not found' });
+    }
+
+    if (!request.claimedBy || request.claimedBy.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Only the volunteer who claimed this request can escalate it' });
+    }
+
+    if ((request.aiExtracted?.urgencyScore ?? 0) < ESCALATION_URGENCY_THRESHOLD) {
+      return res.status(400).json({ message: 'This request does not meet the disaster-level threshold for escalation' });
+    }
+
+    if (request.escalated) {
+      return res.status(400).json({ message: 'This request has already been escalated' });
+    }
+
+    const escalatedByUser = await User.findById(req.user.id);
+
+    await sendEscalationEmail(request, escalatedByUser);
+
+    request.escalated = true;
+    request.escalatedAt = new Date();
+    await request.save();
+
+    const io = req.app.get('io');
+    io.emit('request_updated', request);
+
+    res.status(200).json(request);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to escalate request', error: err.message });
+  }
+};
+
+module.exports = { createRequest, getRequests, getRequestById, claimRequest, resolveRequest, escalateRequest };

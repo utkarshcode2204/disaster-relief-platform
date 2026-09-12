@@ -7,6 +7,7 @@ const {
   getRequestById,
   claimRequest,
   resolveRequest,
+  escalateRequest,
 } = require('../controllers/requestController');
 const protect = require('../middleware/authMiddleware');
 
@@ -39,5 +40,6 @@ router.get('/', getRequests);
 router.get('/:id', getRequestById);
 router.patch('/:id/claim', protect, claimRequest);
 router.patch('/:id/resolve', protect, resolveRequest);
+router.patch('/:id/escalate', protect, escalateRequest);
 
 module.exports = router;

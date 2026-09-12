@@ -16,6 +16,9 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
+// Must match backend ESCALATION_URGENCY_THRESHOLD in requestController.js
+const ESCALATION_URGENCY_THRESHOLD = 5;
+
 function RequestMap() {
   const [requests, setRequests] = useState([]);
   const { user } = useAuth();
@@ -64,6 +67,18 @@ function RequestMap() {
     }
   };
 
+  const handleEscalate = async (id) => {
+    if (!window.confirm('Escalate this request to government authorities? This will send an email alert.')) {
+      return;
+    }
+    try {
+      await api.patch(`/requests/${id}/escalate`);
+      alert('Request escalated to authorities.');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to escalate request');
+    }
+  };
+
   return (
     <div className="w-full h-96 rounded-lg overflow-hidden shadow-md">
       <MapContainer
@@ -79,6 +94,9 @@ function RequestMap() {
           const isResponder =
             user && req.claimedBy && req.claimedBy === user.id;
 
+          const isEscalationEligible =
+            (req.aiExtracted?.urgencyScore ?? 0) >= ESCALATION_URGENCY_THRESHOLD;
+
           return (
             <Marker
               key={req._id}
@@ -88,6 +106,12 @@ function RequestMap() {
                 <strong>{req.category.toUpperCase()}</strong>
                 <p>{req.description}</p>
                 <p className="text-xs text-gray-500 mb-2">Status: {req.status}</p>
+
+                {req.escalated && (
+                  <p className="text-xs font-semibold text-red-600 mb-2">
+                    🚨 Escalated to authorities
+                  </p>
+                )}
 
                 {user && req.status === 'pending' && (
                   <button
@@ -101,9 +125,18 @@ function RequestMap() {
                 {user && req.status === 'claimed' && (
                   <button
                     onClick={() => handleResolve(req._id)}
-                    className="bg-green-600 text-white text-xs px-3 py-1 rounded hover:bg-green-700"
+                    className="bg-green-600 text-white text-xs px-3 py-1 rounded hover:bg-green-700 mr-2"
                   >
                     Mark Resolved
+                  </button>
+                )}
+
+                {user && req.status === 'claimed' && isResponder && isEscalationEligible && !req.escalated && (
+                  <button
+                    onClick={() => handleEscalate(req._id)}
+                    className="bg-red-600 text-white text-xs px-3 py-1 rounded hover:bg-red-700"
+                  >
+                    Escalate to Authorities
                   </button>
                 )}
 
