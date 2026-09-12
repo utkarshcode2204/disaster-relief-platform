@@ -4,6 +4,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import MyResources from './pages/MyResources';
+import Donate from './pages/Donate';
 import { useAuth } from './context/AuthContext';
 
 function App() {
@@ -26,6 +27,7 @@ function App() {
         path="/my-resources"
         element={user ? <MyResources /> : <Navigate to="/login" />}
       />
+      <Route path="/donate" element={<Donate />} />
       <Route path="/" element={<Navigate to={user ? '/dashboard' : '/login'} />} />
     </Routes>
   );

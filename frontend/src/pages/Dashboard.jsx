@@ -21,6 +21,12 @@ function Dashboard() {
         </h1>
         <div className="flex gap-3 items-center">
           {user && <NotificationBell />}
+          <button
+            onClick={() => navigate('/donate')}
+            className="bg-pink-500 text-white px-4 py-2 rounded hover:bg-pink-600"
+          >
+            Donate
+          </button>
           {user?.role === 'volunteer' && (
             <button
               onClick={() => navigate('/my-resources')}

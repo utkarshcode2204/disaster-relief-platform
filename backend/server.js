@@ -26,6 +26,7 @@ const requestRoutes = require('./routes/requestRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const resourceRoutes = require('./routes/resourceRoutes');
 const messageRoutes = require('./routes/messageRoutes');
+const donationRoutes = require('./routes/donationRoutes');
 
 dotenv.config();
 connectDB();
@@ -56,6 +57,7 @@ app.use('/api/requests', requestRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/resources', resourceRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/donations', donationRoutes);
 
 const server = http.createServer(app);
 const io = new Server(server, {
